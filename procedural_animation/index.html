@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script> 
+<style>
+    canvas {
+        border:1px solid #d3d3d3;
+        background-color: #272d34;
+    }
+    body{
+        background-color: #272d34;
+    }
+    h1{
+        color: #d3d3d3;
+        text-align: center;
+    }
+    h4{
+        color: #d3d3d3;
+        text-align: center;
+    }
+    p{
+        color: #d3d3d3;
+    }
+    #creature-canvas{
+        padding-left: 0;
+        padding-right: 0;
+        margin-left: auto;
+        margin-right: auto;
+        display: block;
+    }
+    .sidebar {
+        height: 100vh;
+        overflow-y: auto;
+        border-right: 1px solid #3f4750;
+        background: #272d34;
+        padding: 20px;
+    }
+
+    /* Ensure form labels and text are bright enough */
+    .form-label, .form-check-label, h4 {
+        color: #ffffff;
+    }
+
+    /* Darker inputs to match the theme */
+    .form-select, .form-control {
+        background-color: #343a40;
+        border: 1px solid #495057;
+        color: #fff;
+    }
+
+    .form-select:focus, .form-control:focus {
+        background-color: #3d444b;
+        color: #fff;
+        border-color: #6c757d;
+        box-shadow: none;
+    }
+
+    hr {
+        border-top: 1px solid #495057;
+        opacity: 1;
+    }
+
+</style>
+<script src="utils.js"></script>
+<script src="spine.js"></script>
+<script src="limb.js"></script>
+<script src="bodyparts.js"></script>
+<script src="animals.js"></script>
+<script src="targetupdaters.js"></script>
+<script src="index.js"></script>
+</head>
+<body onload="setup()">
+    <h1>Procedural Generation</h1>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-3 panel">
+                <h4 class="mb-0">Creature Settings</h4>
+                    
+                <hr>
+
+                <div class="mb-3">
+                    <div class="row g-2 mb-3">
+                        <label class="form-label fw-bold small">Animal & Movement</label>
+                        <select id="select-creature" onchange="change_creature()" class="form-control form-control-lg">
+                            <option value="snake">Snake</option>
+                            <option value="lizard">Lizard</option>
+                        </select>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <select id="select-target" onchange="change_target()" class="form-control form-control-lg">
+                            <option value="figure8">Follow Figure of 8</option>
+                            <option value="mouse">Follow Mouse</option>
+                            <option value="randwalk">Random Walk</option>
+                            <option value="randpath">Random Path</option>
+                        </select>
+                    </div>
+                </div> 
+                
+                <hr>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold small">Speed</label>
+                    <input type="range" min="1" max="10" step="0.5" class="form-range" id="range-speed">
+                </div>
+                
+                <hr>
+                    
+                <div class="row g-2 mb-3">
+                    <label class="form-label fw-bold small" for="body-color-picker">Select Body Colours</label>
+                    <div class="col-6">
+                        <input type="color" class="form-control form-control-color w-100" value="#3A40C2" id="body-color-picker" />
+                    </div>
+                    <div class="col-6">
+                        <input type="color" class="form-control form-control-color w-100" value="#c1c1c1" id="body-outline-picker" />
+                    </div>
+                </div>
+                <div class="row g-2 mb-3">
+                    <label class="form-label fw-bold small" for="limb-color-picker">Select Limb Colours</label>
+                    <div class="col-6">
+                        <input type="color" class="form-control form-control-color w-100" value="#3A40C2" id="limb-color-picker" />
+                    </div>
+                    <div class="col-6">
+                        <input type="color" class="form-control form-control-color w-100" value="#c1c1c1" id="limb-outline-picker" />
+                    </div>
+                </div>
+                
+                <hr>
+
+                <div class="row mt-3">
+                    <div class="col-6">
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" id="draw-body-check" checked>
+                            <label class="form-check-label" for="draw-body-check">Draw Body</label>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="draw-legs-check" checked>
+                            <label class="form-check-label" for="draw-legs-check">Draw Legs</label>
+                        </div>
+                    </div>
+                    <div class="col-6 border-start">
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="draw-debug-line-check">
+                            <label class="form-check-label small" for="draw-debug-line-check">Debug Lines</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="draw-debug-points-check">
+                            <label class="form-check-label small" for="draw-debug-points-check">Debug Points</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6" id="canvas-container">
+                <canvas id="creature-canvas"></canvas>
+            </div>
+
+            
+            <div class="col-md-3 panel">
+                <h4 class="mb-4">Information</h4>
+
+                <hr>
+                
+                <div>
+                    <p>
+                        I made this after seeing <a href="https://www.youtube.com/watch?v=qlfh_rv6khY">this video</a> on Youtube. 
+                        I've liked the idea of procedural generation for a while and thought copying this would be a nice little project. 
+                        I used a JS canvas to demo the concepts because I didnt want to install anything to run. 
+                        Also I tried not to use any libraries so that I would have to implement the everything.
+                    </p>
+                </div>
+                    
+                <div>
+                    <p>
+                        The animals work by creating a load of <strong>circles</strong> and chaining them together at a set distance apart.
+                        The edge pieces of the circles are then found and joined up using straight lines which makes a body.
+                        You can see the circles and points that are used to draw the body by toggling on the <strong>debug points</strong> and <strong>debug lines</strong> options.
+                    </p>
+                </div>
+                <div>
+                    <p>
+                        The code can be found <a href="">here</a> and the core concepts can be used to add more animal types and features.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
